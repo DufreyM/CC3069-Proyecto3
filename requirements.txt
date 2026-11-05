@@ -1,0 +1,11 @@
+# PyTorch con CUDA 12.8; instalar con:
+#   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0+cu128
+torchvision==0.26.0+cu128
+numpy
+pandas
+scikit-learn
+opencv-python-headless
+matplotlib
+psutil
+nvidia-ml-py
