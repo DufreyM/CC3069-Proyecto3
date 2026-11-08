@@ -9,5 +9,7 @@ mkdir -p resultados/logs
 "$PY" -m src.medir_preparacion --repeticiones 5 --completo 2>&1 | tee resultados/logs/preparacion.log
 "$PY" -m src.medir_entrenamiento --modos cuda cuda_optimizado --repeticiones 5 2>&1 | tee resultados/logs/entrenamiento_gpu.log
 "$PY" -m src.medir_entrenamiento --modos cuda --modelos profunda --repeticiones 3 --epocas 5 --desglosar --salida desglose_gpu.csv 2>&1 | tee resultados/logs/desglose_gpu.log
+"$PY" -m src.medir_kernel --imagenes 1024 --repeticiones 10 2>&1 | grep -av -i warning | tee resultados/logs/kernel.log
 "$PY" -m src.medir_entrenamiento --modos cpu_nhilos --repeticiones 3 2>&1 | tee resultados/logs/entrenamiento_cpu_nhilos.log
 "$PY" -m src.medir_entrenamiento --modos cpu_1hilo --repeticiones 3 --epocas 3 2>&1 | tee resultados/logs/entrenamiento_cpu_1hilo.log
+"$PY" -m src.analisis 2>&1 | tee resultados/logs/analisis.log
