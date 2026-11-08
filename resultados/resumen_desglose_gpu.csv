@@ -1,0 +1,4 @@
+fase,segundos,porcentaje
+Obtener lote (CPU),1.5083,9.5131
+Copia CPU→GPU,0.3639,2.2952
+Cómputo en GPU,13.9824,88.1916

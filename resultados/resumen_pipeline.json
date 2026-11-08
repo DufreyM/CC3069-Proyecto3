@@ -1,0 +1,11 @@
+{
+  "preparacion_secuencial_s": 5.1113,
+  "preparacion_paralela_s": 1.6015,
+  "procesos_optimos": 8.0,
+  "entrenamiento_cpu_1hilo_s": 1701.5261,
+  "entrenamiento_gpu_s": 44.4226,
+  "entrenamiento_gpu_optimizado_s": 28.9306,
+  "total_secuencial_s": 1706.6374,
+  "total_paralelo_s": 46.0241,
+  "speedup_total": 37.0814
+}

@@ -1,0 +1,5 @@
+version,imagenes,segundos,segundos_std,solo_kernel,speedup,speedup_solo_kernel
+cpu_secuencial,1024,1.3127,0.0441,,1.0000,
+cpu_paralela,1024,0.1445,0.0122,,9.0832,
+cuda_kernel_propio,1024,0.1339,0.0129,0.0182,9.8009,72.1713
+cudnn_pytorch,1024,0.0828,0.0312,,15.8483,
