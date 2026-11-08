@@ -2,10 +2,11 @@
 #   pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cu128
 torch==2.11.0+cu128
 torchvision==0.26.0+cu128
-numpy
+numpy<2.4  # numba-cuda 0.30 todavía usa np.row_stack
 pandas
 scikit-learn
 opencv-python-headless
 matplotlib
 psutil
 nvidia-ml-py
+numba-cuda[cu12]==0.30.4
