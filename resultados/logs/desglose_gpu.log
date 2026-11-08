@@ -1,0 +1,7 @@
+PyTorch 2.11.0+cu128 | CUDA 12.8 | Python 3.12.14
+GPU: NVIDIA GeForce RTX 4060 Laptop GPU
+Hilos por defecto de PyTorch: 24
+{'train': (13195, 64, 64, 3), 'val': (2827, 64, 64, 3), 'test': (2828, 64, 64, 3)}
+cuda profunda rep=1: 18.7 s | train 16.1 s | acc 0.9063 | f1 0.9069 | VRAM 0.27 GB
+cuda profunda rep=2: 17.1 s | train 15.7 s | acc 0.9141 | f1 0.9149 | VRAM 0.27 GB
+cuda profunda rep=3: 17.2 s | train 15.8 s | acc 0.9240 | f1 0.9242 | VRAM 0.27 GB

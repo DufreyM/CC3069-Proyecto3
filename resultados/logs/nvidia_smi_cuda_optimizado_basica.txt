@@ -1,0 +1,26 @@
+Sun Nov  8 16:18:26 2026       
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 581.42                 Driver Version: 581.42         CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                  Driver-Model | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 4060 ...  WDDM  |   00000000:01:00.0 Off |                  N/A |
+| N/A   86C    P0             63W /   79W |    1217MiB /   8188MiB |     90%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A             716    C+G   ...indows\System32\ShellHost.exe      N/A      |
+|    0   N/A  N/A            4048    C+G   ...ayRenderer-Win64-Shipping.exe      N/A      |
+|    0   N/A  N/A            9000    C+G   ...s\Win64\EpicGamesLauncher.exe      N/A      |
+|    0   N/A  N/A           10384    C+G   C:\Windows\explorer.exe               N/A      |
+|    0   N/A  N/A           18484    C+G   ...5n1h2txyewy\TextInputHost.exe      N/A      |
+|    0   N/A  N/A           29376    C+G   ...kyb3d8bbwe\EdgeGameAssist.exe      N/A      |
+|    0   N/A  N/A           39476      C   ...indows-x86_64-none\python.exe      N/A      |
++-----------------------------------------------------------------------------------------+

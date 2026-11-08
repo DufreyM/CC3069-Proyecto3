@@ -1,0 +1,24 @@
+PyTorch 2.11.0+cu128 | CUDA 12.8 | Python 3.12.14
+GPU: NVIDIA GeForce RTX 4060 Laptop GPU
+Hilos por defecto de PyTorch: 24
+{'train': (13195, 64, 64, 3), 'val': (2827, 64, 64, 3), 'test': (2828, 64, 64, 3)}
+cuda basica rep=1: 17.9 s | train 14.7 s | acc 0.9219 | f1 0.9223 | VRAM 0.14 GB
+cuda basica rep=2: 16.1 s | train 14.4 s | acc 0.9148 | f1 0.9154 | VRAM 0.14 GB
+cuda basica rep=3: 16.2 s | train 14.3 s | acc 0.9127 | f1 0.9124 | VRAM 0.14 GB
+cuda basica rep=4: 16.3 s | train 14.6 s | acc 0.9077 | f1 0.9085 | VRAM 0.14 GB
+cuda basica rep=5: 16.9 s | train 15.1 s | acc 0.9289 | f1 0.9291 | VRAM 0.14 GB
+cuda profunda rep=1: 43.9 s | train 40.5 s | acc 0.9866 | f1 0.9866 | VRAM 0.27 GB
+cuda profunda rep=2: 44.3 s | train 40.9 s | acc 0.9795 | f1 0.9797 | VRAM 0.27 GB
+cuda profunda rep=3: 44.2 s | train 40.8 s | acc 0.9501 | f1 0.9499 | VRAM 0.27 GB
+cuda profunda rep=4: 44.5 s | train 41.1 s | acc 0.9848 | f1 0.9848 | VRAM 0.27 GB
+cuda profunda rep=5: 45.1 s | train 41.6 s | acc 0.9731 | f1 0.9732 | VRAM 0.27 GB
+cuda_optimizado basica rep=1: 12.8 s | train 11.6 s | acc 0.9130 | f1 0.9125 | VRAM 0.97 GB
+cuda_optimizado basica rep=2: 11.3 s | train 10.1 s | acc 0.9102 | f1 0.9098 | VRAM 0.97 GB
+cuda_optimizado basica rep=3: 11.3 s | train 10.1 s | acc 0.9091 | f1 0.9091 | VRAM 0.97 GB
+cuda_optimizado basica rep=4: 11.0 s | train 9.8 s | acc 0.9371 | f1 0.9365 | VRAM 0.97 GB
+cuda_optimizado basica rep=5: 10.9 s | train 9.6 s | acc 0.9318 | f1 0.9323 | VRAM 0.97 GB
+cuda_optimizado profunda rep=1: 29.6 s | train 26.2 s | acc 0.9869 | f1 0.9870 | VRAM 1.04 GB
+cuda_optimizado profunda rep=2: 28.9 s | train 25.6 s | acc 0.9728 | f1 0.9729 | VRAM 1.04 GB
+cuda_optimizado profunda rep=3: 28.8 s | train 25.5 s | acc 0.9742 | f1 0.9741 | VRAM 1.04 GB
+cuda_optimizado profunda rep=4: 28.7 s | train 25.4 s | acc 0.9813 | f1 0.9812 | VRAM 1.04 GB
+cuda_optimizado profunda rep=5: 28.7 s | train 25.5 s | acc 0.9851 | f1 0.9852 | VRAM 1.04 GB
