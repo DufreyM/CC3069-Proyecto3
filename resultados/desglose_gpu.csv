@@ -1,0 +1,4 @@
+modo,modelo,repeticion,epocas,hilos,imagenes,seg_total,seg_entrenamiento,seg_validacion,seg_primera_epoca,seg_lote,seg_transferencia,seg_computo,accuracy_test,f1_test,vram_pico_gb,desglosado
+cuda,profunda,1,5,24,13195,18.74,16.0691,1.0207,3.6656,1.4285,0.36,14.2796,0.9063,0.9069,0.2737,True
+cuda,profunda,2,5,24,13195,17.065,15.695,0.9956,3.348,1.5076,0.3644,13.8219,0.9141,0.9149,0.2735,True
+cuda,profunda,3,5,24,13195,17.188,15.8029,1.002,3.3522,1.5887,0.3673,13.8457,0.924,0.9242,0.2735,True
