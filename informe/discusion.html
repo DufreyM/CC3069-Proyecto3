@@ -1,0 +1,183 @@
+<h2>1. Introducción</h2>
+<p>Este proyecto toma el Laboratorio 3 de CC3084 Data Science, un clasificador del alfabeto de señas
+americano (ASL) con redes convolucionales, y lo reorganiza para aprovechar el hardware: la preparación
+de imágenes se reparte entre varios núcleos de la CPU y toda la matemática de la red neuronal se
+ejecuta en la GPU con CUDA. El objetivo es medir cuánto se reduce el tiempo de cada fase frente a la
+versión secuencial, con los mismos datos, modelos e hiperparámetros, y explicar por qué.</p>
+<p>Se usa el dataset ASL Alphabet de Kaggle: 87,000 imágenes JPG de 200×200 en 29 clases (A-Z,
+<code>del</code>, <code>space</code> y <code>nothing</code>). Igual que en el laboratorio, se toman 650
+imágenes por clase (18,850), divididas 70/15/15 en 13,195 de entrenamiento, 2,827 de validación y
+2,828 de prueba, y se redimensionan a 64×64. La preparación también se midió con las 87,000 imágenes
+para observar el efecto del tamaño del problema.</p>
+
+<h2>2. Entorno y metodología</h2>
+<table>
+<thead><tr><th>Componente</th><th>Detalle</th></tr></thead>
+<tbody>
+<tr><td>CPU</td><td>Intel Core i9-13900HX: 24 núcleos (8 de rendimiento y 16 eficientes), 32 hilos lógicos</td></tr>
+<tr><td>GPU</td><td>NVIDIA GeForce RTX 4060 Laptop, 8 GB de VRAM, controlador 581.42</td></tr>
+<tr><td>Memoria y disco</td><td>32 GB de RAM; SSD NVMe SK Hynix de 1 TB</td></tr>
+<tr><td>Software</td><td>Windows 11 Home, Python 3.12.14, PyTorch 2.11.0 con CUDA 12.8 y cuDNN, Numba 0.68.1 con numba-cuda 0.30.4, OpenCV 5.0, NumPy 2.3</td></tr>
+</tbody>
+</table>
+<p>El código separa estrictamente las dos fases. <code>src/preparacion_secuencial.py</code> y
+<code>src/preparacion_paralela.py</code> solo leen y transforman archivos en CPU y no importan PyTorch;
+<code>src/entrenamiento.py</code> recibe tensores ya preparados y nunca toca un archivo de imagen. Las
+mediciones se repitieron bajo las mismas condiciones (equipo conectado a la corriente, mismas semillas):</p>
+<ul>
+<li><strong>Preparación:</strong> 5 corridas por cantidad de procesos con la muestra y 3 con el dataset completo. Antes se leen todos los archivos una vez para que ninguna corrida pague la lectura en frío. Cada resultado paralelo se compara con el secuencial mediante una huella SHA-256 del tensor.</li>
+<li><strong>Entrenamiento:</strong> 15 épocas, lotes de 64, Adam con tasa 0.001. GPU: 5 corridas por modelo y modo. CPU con 24 hilos: 3 corridas. CPU con 1 hilo: 3 corridas de 3 épocas, porque 15 épocas tardarían cerca de media hora por corrida; su total de 15 épocas se estima sumando épocas estables y se marca con *.</li>
+<li><strong>Kernel CUDA:</strong> 10 corridas sobre 1,024 imágenes reales; las cuatro versiones se validan contra PyTorch (error máximo &lt; 10<sup>-4</sup>).</li>
+<li><strong>Relojes:</strong> <code>time.perf_counter</code>, con <code>torch.cuda.synchronize()</code> antes de detenerlo, porque la GPU trabaja de forma asíncrona. Los tiempos de GPU incluyen las transferencias CPU↔GPU. La primera época se registra aparte porque incluye la inicialización de CUDA.</li>
+</ul>
+<p class="nota">La preparación de la muestra se midió mientras había otras aplicaciones abiertas (carga de
+CPU cercana al 20 % antes de empezar); se cerraron antes de medir el dataset completo y el resto de
+fases. Unas mediciones previas en modo de ahorro de energía dieron tiempos de hasta el doble y la GPU
+limitada a 40 W, por lo que se descartaron.</p>
+
+<h2 class="salto">3. Análisis de la solución secuencial y diseño paralelo</h2>
+{{ANALISIS}}
+
+<h2 class="salto">4. Resultados</h2>
+<h3>4.1 Resumen y speedup por fase</h3>
+{{TABLA_FASES}}
+<p>El pipeline completo (preparar 18,850 imágenes y entrenar la CNN profunda 15 épocas) pasa de unos
+28 minutos en un solo núcleo a 46 segundos combinando procesos de CPU para la preparación y CUDA para
+el entrenamiento. Como el entrenamiento ocupa más del 99 % del tiempo secuencial, el speedup total
+lo determina casi por completo la GPU.</p>
+
+<h3>4.2 Preparación de imágenes en CPU</h3>
+{{TABLA_PREP}}
+{{FIG_PREP}}
+<p>La versión secuencial procesa unas 3,700 imágenes por segundo en un núcleo. Con la muestra, el
+mejor tiempo se logra con 8 procesos (3.19×, eficiencia del 40 %); con el dataset completo, con
+12 procesos (4.55×). A partir de 12-16 procesos el tiempo vuelve a subir. Esto se debe a que
+cada proceso nuevo en Windows arranca un intérprete e importa OpenCV y NumPy (un costo fijo
+que pesa más cuando el trabajo total dura solo 1.6 s), a que todos los procesos comparten el
+mismo disco y el mismo bus de memoria, y a que pasados los 8 núcleos de rendimiento el trabajo cae en
+hilos de hyperthreading y núcleos eficientes, más lentos. Con más imágenes el costo fijo se reparte
+mejor, por eso el dataset completo escala más.</p>
+
+<h3>4.3 Entrenamiento: CPU frente a GPU</h3>
+{{TABLA_ENT}}
+<p class="nota">* Total estimado: corridas de 3 épocas llevadas a 15 sumando épocas estables. El accuracy
+de esas corridas es bajo porque solo entrenaron 3 épocas; no refleja una diferencia de calidad.</p>
+{{FIG_EPOCA}}
+{{FIG_SPEEDUP}}
+<p>Para la CNN profunda, una época pasa de 112.9 s en un hilo a 37.1 s con 24 hilos de CPU (3.0×),
+2.92 s en GPU (38.7×) y 1.88 s en el modo optimizado (60.2×). Frente a la mejor configuración de CPU,
+la GPU sigue siendo 12.5× más rápida y la versión optimizada 19.2×. La CNN básica gana menos
+(31× y 45×) porque hace 5.8 veces menos operaciones por imagen y la GPU queda más tiempo esperando
+datos. El accuracy en test con 15 épocas es equivalente entre CPU y GPU (0.977, 0.975 y 0.980 en la
+profunda), así que la aceleración no cambia el resultado del modelo.</p>
+
+<h3>4.4 ¿En qué se va el tiempo en la GPU?</h3>
+{{TABLA_DES}}
+{{FIG_DESGLOSE}}
+<p>Con el <code>DataLoader</code> original, el 88 % del paso es cómputo en GPU, el 9.5 % es la CPU armando
+el lote y solo el 2.3 % es la copia CPU→GPU. El modo optimizado elimina el armado de lotes al cargar
+los tensores completos en VRAM una sola vez (1 GB) y usa precisión mixta (AMP), que aprovecha los
+Tensor Cores: así baja de 2.92 a 1.88 s por época.</p>
+
+<h3>4.5 Kernel CUDA propio: la primera convolución</h3>
+{{TABLA_KER}}
+{{FIG_KERNEL}}
+<p>El kernel propio calcula la convolución 72 veces más rápido que el mismo bucle en un núcleo, pero
+contando las copias el speedup cae a 9.8×: de 134 ms, solo 18 ms son cómputo y el 86 % restante es
+copiar 50 MB de entrada al GPU y traer de vuelta 537 MB de salida. Con transferencias, el kernel
+propio apenas supera a la CPU con 32 hilos (144 ms), y cuDNN es más rápido (83 ms) porque usa
+algoritmos de convolución más eficientes que el bucle directo. Esto muestra por qué en el
+entrenamiento real los datos deben quedarse en la GPU entre capas: si cada capa volviera a la CPU,
+las transferencias anularían la ganancia.</p>
+
+<h2 class="salto">5. Evidencia de ejecución</h2>
+<p>Un hilo de monitoreo registró cada 0.5 s el uso de los 32 núcleos lógicos, la RAM, el uso de GPU,
+la VRAM y la potencia (<code>psutil</code> y NVML) durante todas las mediciones.</p>
+{{TABLA_MON}}
+{{FIG_NUC_P1}}
+{{FIG_NUC_P16}}
+{{FIG_NUC_1H}}
+{{FIG_NUC_NH}}
+{{FIG_GPU}}
+{{FIG_GPU_OPT}}
+<p>Las figuras confirman que cada fase usó el hardware esperado. Con un hilo, solo un núcleo supera el
+50 % de uso (el sistema lo va moviendo entre núcleos); con 24 hilos, 31 de los 32 núcleos lógicos
+superan el 50 % y la GPU queda en 0 %. En GPU, la utilización promedio es del 97 % con 0.7 GB de VRAM y
+hasta 82 W, en estado P0. Un dato llamativo: en el modo <code>cuda</code> la CPU sigue al 80 %, porque el
+<code>DataLoader</code> arma cada lote imagen por imagen usando los 24 hilos de PyTorch; en el modo
+optimizado la CPU baja al 13 % y la GPU mantiene un 93 %.</p>
+<h3>Capturas de pantalla</h3>
+{{CAPTURAS}}
+<h3>Logs</h3>
+{{LOGS}}
+
+<h2 class="salto">6. Discusión técnica</h2>
+<h3>¿Por qué procesar las imágenes con varios núcleos de CPU y delegar a la GPU solo la matemática de la red?</h3>
+<p>Porque cada fase tiene una forma de trabajo distinta. Preparar una imagen implica leer un archivo
+del sistema de archivos (que administra el sistema operativo en la CPU) y decodificar un JPG, cuyo
+formato comprimido se descifra de manera secuencial y con muchas ramas condicionales. Son tareas
+independientes entre imágenes pero irregulares por dentro, ideales para unos pocos núcleos potentes
+trabajando en paralelo: cada proceso toma su bloque de imágenes y no necesita coordinarse con los
+demás. Llevar estos archivos a la GPU no ahorraría nada: igual habría que leerlos del disco con la
+CPU y copiarlos por el bus PCIe, y la decodificación no aprovecharía miles de hilos.</p>
+<p>La red neuronal es lo contrario: millones de multiplicaciones y sumas idénticas sobre datos
+distintos (116.8 millones solo en las convoluciones de una imagen de la CNN profunda). Ese
+paralelismo de datos regular es justo lo que la GPU resuelve con miles de hilos ejecutando la misma
+instrucción. Separar así las fases deja que cada procesador haga aquello para lo que fue diseñado.</p>
+
+<h3>¿Cómo CUDA permitió reducir el tiempo de procesamiento?</h3>
+<p>CUDA permite ejecutar cada capa como un kernel lanzado sobre millones de hilos: en el kernel propio,
+un lote de 64 imágenes lanza 32,768 bloques de 256 hilos, uno por cada píxel de salida de cada filtro.
+Mientras la CPU procesa unas pocas operaciones por ciclo en cada núcleo, la GPU las reparte entre sus
+3,072 núcleos CUDA y oculta la latencia de memoria alternando entre grupos de hilos. PyTorch delega
+estas operaciones a cuDNN, que además elige algoritmos de convolución optimizados, y la precisión
+mixta usa los Tensor Cores. El resultado fue un entrenamiento de la CNN profunda 38× más rápido que en
+un hilo de CPU y 12.5× más rápido que con los 24 hilos (59× y 19× en el modo optimizado), sin cambiar
+el accuracy.</p>
+
+<h3>¿Qué factores justifican o limitan la utilización de CUDA?</h3>
+<p><strong>La justifican:</strong> un volumen grande de cálculo regular (las convoluciones son el
+92-98 % de las operaciones), datos que caben en VRAM (los tensores ocupan 0.9 GB de 8 GB) y un
+entrenamiento repetido muchas veces (3,105 pasos de optimización), donde el costo inicial se amortiza.</p>
+<p><strong>La limitan:</strong></p>
+<ul>
+<li><strong>Transferencias:</strong> en el kernel aislado, las copias fueron el 86 % del tiempo. CUDA solo rinde si los datos se quedan en la GPU entre operaciones.</li>
+<li><strong>Preparación del lado de la CPU:</strong> con el <code>DataLoader</code>, la CPU arma los lotes al 80 % de uso y es el 9.5 % del paso; eliminarlo dio 1.56× adicional.</li>
+<li><strong>Modelos pequeños:</strong> la CNN básica obtuvo menos speedup que la profunda porque no alcanza a ocupar toda la GPU.</li>
+<li><strong>Inicialización:</strong> crear el contexto CUDA y cargar kernels toma segundos; con <code>cudnn.benchmark</code> activado la primera época tardaba de 5 a 11 s más, sin mejorar el tiempo por lote, por lo que se desactivó.</li>
+<li><strong>Energía y temperatura:</strong> en una laptop el rendimiento depende del modo de energía. Con el equipo en ahorro, la GPU quedó limitada a 40 W y los tiempos casi se duplicaron; conectada llegó a 82 W y 85 °C.</li>
+<li><strong>Capacidad y entorno:</strong> la VRAM de 8 GB limita el tamaño de lote y de dataset en memoria; además, combinar librerías fue delicado (PyTorch y Numba traen versiones distintas de la misma DLL de CUDA y hubo que controlar el orden de carga).</li>
+</ul>
+
+<h3>Funciones y librerías que permitieron trabajar con la GPU</h3>
+<table>
+<thead><tr><th>Librería</th><th>Funciones usadas</th><th>Para qué</th></tr></thead>
+<tbody>
+<tr><td>PyTorch (<code>torch.cuda</code>)</td><td><code>torch.device("cuda")</code>, <code>.to(device, non_blocking=True)</code>, <code>torch.cuda.synchronize</code>, <code>max_memory_allocated</code></td><td>Mover modelo y datos a la GPU, copias asíncronas y medición correcta</td></tr>
+<tr><td>PyTorch DataLoader</td><td><code>pin_memory=True</code></td><td>Memoria fijada en RAM para copias CPU→GPU más rápidas</td></tr>
+<tr><td>PyTorch AMP</td><td><code>torch.autocast</code>, <code>torch.amp.GradScaler</code></td><td>Precisión mixta en Tensor Cores sin perder estabilidad</td></tr>
+<tr><td>cuDNN</td><td><code>torch.backends.cudnn</code></td><td>Kernels optimizados de convolución, BatchNorm y pooling</td></tr>
+<tr><td>Numba CUDA</td><td><code>@cuda.jit</code>, <code>cuda.grid</code>, <code>cuda.shared.array</code>, <code>cuda.syncthreads</code>, <code>cuda.to_device</code>, <code>cuda.event</code></td><td>Kernel propio con grid y bloques explícitos, memoria compartida y medición con eventos</td></tr>
+<tr><td>NVML / nvidia-smi</td><td><code>pynvml</code>, <code>nvidia-smi</code></td><td>Uso de GPU, VRAM y potencia como evidencia</td></tr>
+<tr><td>CPU</td><td><code>ProcessPoolExecutor</code>, <code>multiprocessing.shared_memory</code>, OpenCV, <code>numba.prange</code></td><td>Preparación paralela de imágenes y versión multinúcleo del kernel</td></tr>
+</tbody>
+</table>
+
+<h2>7. Conclusiones</h2>
+<ul>
+<li>Separar el pipeline funcionó: la preparación en CPU con varios procesos fue 3.2× más rápida con la muestra y 4.6× con el dataset completo, y el entrenamiento de la CNN profunda en GPU fue 38× más rápido que en un hilo (59× en el modo optimizado). El pipeline completo pasó de 28 minutos a 46 segundos (37×).</li>
+<li>La paralelización en CPU tiene un techo cercano a los 8-12 procesos por el costo de crear procesos, el disco y la memoria compartidos y la mezcla de núcleos; agregar más procesos empeora el tiempo.</li>
+<li>La GPU acelera mucho más que los 24 hilos de CPU (12.5× a 19×) porque la red neuronal es cálculo regular y masivo, y el accuracy no cambia.</li>
+<li>El mayor enemigo de CUDA es mover datos: en el kernel aislado las copias fueron el 86 % del tiempo, y mantener los datos en VRAM fue la optimización más rentable del entrenamiento.</li>
+</ul>
+
+<h2>8. Distribución del trabajo</h2>
+<table>
+<thead><tr><th>Integrante</th><th>Parte</th></tr></thead>
+<tbody>
+<tr><td>Leonardo Mejía</td><td>Configuración, carga de datos y modelos del laboratorio, preparación secuencial, medición de tiempos y análisis de speedup</td></tr>
+<tr><td>María José Girón</td><td>Preparación paralela con procesos y memoria compartida, kernel CUDA propio y análisis de operaciones y diseño</td></tr>
+<tr><td>Cindy Gualim</td><td>Entrenamiento en GPU con CUDA, monitoreo de recursos, medición del kernel y evidencia de ejecución</td></tr>
+</tbody>
+</table>
+<p class="nota">Código: https://github.com/DufreyM/CC3069-Proyecto3</p>
