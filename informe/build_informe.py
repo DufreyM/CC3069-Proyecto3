@@ -6,6 +6,7 @@ Las capturas de pantalla van en informe/capturas/ (PNG o JPG); se incluyen todas
 Uso: python informe/build_informe.py
 """
 import base64
+import re
 import html
 import json
 import os
@@ -23,7 +24,6 @@ from src.analisis import ETIQUETAS, MODELOS  # noqa: E402
 from src.config import DIR_FIGURAS, DIR_LOGS, DIR_RESULTADOS, EPOCAS  # noqa: E402
 
 INFORME = RAIZ / "informe"
-INTEGRANTES = ["María José Girón Isidro", "Leonardo Dufrey Mejía Mejía", "Cindy Mishelle Gualim Perez"]
 
 
 def imagen(ruta: Path, pie: str) -> str:
@@ -140,14 +140,16 @@ def construir() -> str:
                 + bloque_log(DIR_LOGS / "nvidia_smi_cpu_nhilos_profunda.txt", "nvidia-smi durante el entrenamiento en CPU (GPU sin carga)")
                 + bloque_log(DIR_LOGS / "entrenamiento_gpu.log", "Log del entrenamiento en GPU", slice(0, 8))
                 + bloque_log(DIR_LOGS / "kernel.log", "Log del kernel CUDA", slice(0, 4)),
-        "ANALISIS": markdown_simple(analisis_md),
+        # Las subsecciones del documento de análisis quedan dentro de la sección 3 del informe.
+        "ANALISIS": re.sub(r"<h3>(\d)\. ", r"<h3>3.\1 ", markdown_simple(analisis_md)),
     }
     for clave, valor in contexto.items():
         discusion = discusion.replace("{{" + clave + "}}", valor)
     for clave, valor in pipe.items():
         discusion = discusion.replace("{{" + clave + "}}", f"{valor:,.2f}" if isinstance(valor, float) else str(valor))
     plantilla = (INFORME / "plantilla.html").read_text(encoding="utf-8")
-    return plantilla.replace("{{INTEGRANTES}}", "<br>".join(INTEGRANTES)).replace("{{CUERPO}}", discusion)
+    logo = base64.b64encode((INFORME / "img" / "logo_uvg.png").read_bytes()).decode()
+    return plantilla.replace("{{LOGO}}", f'<img src="data:image/png;base64,{logo}" alt="UVG">').replace("{{CUERPO}}", discusion)
 
 
 def markdown_simple(texto: str) -> str:

@@ -35,10 +35,10 @@ CPU cercana al 20 % antes de empezar); se cerraron antes de medir el dataset com
 fases. Unas mediciones previas en modo de ahorro de energía dieron tiempos de hasta el doble y la GPU
 limitada a 40 W, por lo que se descartaron.</p>
 
-<h2 class="salto">3. Análisis de la solución secuencial y diseño paralelo</h2>
+<h2>3. Análisis de la solución secuencial y diseño paralelo</h2>
 {{ANALISIS}}
 
-<h2 class="salto">4. Resultados</h2>
+<h2>4. Resultados</h2>
 <h3>4.1 Resumen y speedup por fase</h3>
 {{TABLA_FASES}}
 <p>El pipeline completo (preparar 18,850 imágenes y entrenar la CNN profunda 15 épocas) pasa de unos
@@ -90,7 +90,7 @@ algoritmos de convolución más eficientes que el bucle directo. Esto muestra po
 entrenamiento real los datos deben quedarse en la GPU entre capas: si cada capa volviera a la CPU,
 las transferencias anularían la ganancia.</p>
 
-<h2 class="salto">5. Evidencia de ejecución</h2>
+<h2>5. Evidencia de ejecución</h2>
 <p>Un hilo de monitoreo registró cada 0.5 s el uso de los 32 núcleos lógicos, la RAM, el uso de GPU,
 la VRAM y la potencia (<code>psutil</code> y NVML) durante todas las mediciones.</p>
 {{TABLA_MON}}
@@ -116,7 +116,7 @@ estado P0, mientras la CPU arma los lotes; con un hilo de CPU, solo unos pocos n
 <h3>Logs</h3>
 {{LOGS}}
 
-<h2 class="salto">6. Discusión técnica</h2>
+<h2>6. Discusión técnica</h2>
 <h3>¿Por qué procesar las imágenes con varios núcleos de CPU y delegar a la GPU solo la matemática de la red?</h3>
 <p>Porque cada fase tiene una forma de trabajo distinta. Preparar una imagen implica leer un archivo
 del sistema de archivos (que administra el sistema operativo en la CPU) y decodificar un JPG, cuyo
@@ -185,4 +185,3 @@ entrenamiento repetido muchas veces (3,105 pasos de optimización), donde el cos
 <tr><td>Cindy Gualim</td><td>Entrenamiento en GPU con CUDA, monitoreo de recursos, medición del kernel y evidencia de ejecución</td></tr>
 </tbody>
 </table>
-<p class="nota">Código: https://github.com/DufreyM/CC3069-Proyecto3</p>
