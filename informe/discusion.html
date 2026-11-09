@@ -107,6 +107,11 @@ hasta 82 W, en estado P0. Un dato llamativo: en el modo <code>cuda</code> la CPU
 <code>DataLoader</code> arma cada lote imagen por imagen usando los 24 hilos de PyTorch; en el modo
 optimizado la CPU baja al 13 % y la GPU mantiene un 93 %.</p>
 <h3>Capturas de pantalla</h3>
+<p>Capturas tomadas mientras corría cada fase. El uso por núcleo se muestra con un monitor de consola
+que lee los contadores del sistema operativo cada segundo (<code>psutil</code>), y el estado de la GPU
+con <code>nvidia-smi</code>. Durante la preparación paralela la carga se reparte entre muchos núcleos; durante
+el entrenamiento en GPU, <code>nvidia-smi</code> muestra el proceso <code>python.exe</code> con 99 % de uso, 77 W y
+estado P0, mientras la CPU arma los lotes; con un hilo de CPU, solo unos pocos núcleos tienen carga.</p>
 {{CAPTURAS}}
 <h3>Logs</h3>
 {{LOGS}}
